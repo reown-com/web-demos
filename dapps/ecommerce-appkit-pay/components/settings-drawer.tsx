@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Settings, Wallet, RotateCcw, Copy, Check } from 'lucide-react'
 import {
   Sheet,
@@ -17,11 +17,30 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useSettings } from '@/lib/settings-context'
 import { paymentAssetOptions } from '@/lib/appkit-config'
+import { CustomAssetConfig } from '@/lib/types'
 import { toast } from 'sonner'
 
 export function SettingsDrawer() {
   const { settings, updateSettings, resetSettings } = useSettings()
   const [copiedAddress, setCopiedAddress] = useState(false)
+  
+  // Custom asset form state
+  const [customAsset, setCustomAsset] = useState<CustomAssetConfig>({
+    network: '',
+    asset: '',
+    metadata: {
+      name: '',
+      symbol: '',
+      decimals: 6
+    }
+  })
+
+  // Sync custom asset state with settings from localStorage
+  useEffect(() => {
+    if (settings.customAsset) {
+      setCustomAsset(settings.customAsset)
+    }
+  }, [settings.customAsset])
 
   const handleRecipientAddressChange = (value: string) => {
     updateSettings({ recipientAddress: value })
@@ -29,6 +48,38 @@ export function SettingsDrawer() {
 
   const handlePaymentAssetChange = (value: string) => {
     updateSettings({ defaultPaymentAsset: value as any })
+  }
+
+  const handleCustomAssetChange = (field: string, value: string | number) => {
+    if (field.startsWith('metadata.')) {
+      const metadataField = field.replace('metadata.', '')
+      setCustomAsset(prev => ({
+        ...prev,
+        metadata: {
+          ...prev.metadata,
+          [metadataField]: value
+        }
+      }))
+    } else {
+      setCustomAsset(prev => ({
+        ...prev,
+        [field]: value
+      }))
+    }
+  }
+
+  const handleSaveCustomAsset = () => {
+    // Validate custom asset fields
+    if (!customAsset.network || !customAsset.asset || !customAsset.metadata.name || !customAsset.metadata.symbol) {
+      toast.error('Please fill in all custom asset fields')
+      return
+    }
+    
+    updateSettings({ 
+      customAsset,
+      defaultPaymentAsset: 'custom'
+    })
+    toast.success('Custom asset saved successfully')
   }
 
   const handleCopyAddress = async () => {
@@ -46,6 +97,15 @@ export function SettingsDrawer() {
 
   const handleReset = () => {
     resetSettings()
+    setCustomAsset({
+      network: '',
+      asset: '',
+      metadata: {
+        name: '',
+        symbol: '',
+        decimals: 6
+      }
+    })
     toast.success('Settings reset to defaults')
   }
 
@@ -141,6 +201,78 @@ export function SettingsDrawer() {
                   ))}
                 </RadioGroup>
               </div>
+
+              {/* Custom Asset Configuration */}
+              {settings.defaultPaymentAsset === 'custom' && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Custom Asset Configuration</Label>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="custom-network" className="text-xs">Network (CAIP-2 format)</Label>
+                        <Input
+                          id="custom-network"
+                          placeholder="e.g., solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
+                          value={customAsset.network}
+                          onChange={(e) => handleCustomAssetChange('network', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="custom-asset" className="text-xs">Asset Address</Label>
+                        <Input
+                          id="custom-asset"
+                          placeholder="Asset contract/mint address"
+                          value={customAsset.asset}
+                          onChange={(e) => handleCustomAssetChange('asset', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="custom-name" className="text-xs">Name</Label>
+                          <Input
+                            id="custom-name"
+                            placeholder="USD Coin"
+                            value={customAsset.metadata.name}
+                            onChange={(e) => handleCustomAssetChange('metadata.name', e.target.value)}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="custom-symbol" className="text-xs">Symbol</Label>
+                          <Input
+                            id="custom-symbol"
+                            placeholder="USDC"
+                            value={customAsset.metadata.symbol}
+                            onChange={(e) => handleCustomAssetChange('metadata.symbol', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="custom-decimals" className="text-xs">Decimals</Label>
+                        <Input
+                          id="custom-decimals"
+                          type="number"
+                          placeholder="6"
+                          value={customAsset.metadata.decimals}
+                          onChange={(e) => handleCustomAssetChange('metadata.decimals', parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                      
+                      <Button 
+                        onClick={handleSaveCustomAsset}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        Save Custom Asset
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <Separator />
 

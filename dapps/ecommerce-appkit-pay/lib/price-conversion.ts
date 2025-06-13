@@ -165,15 +165,22 @@ export async function convertUSDToCrypto(
 /**
  * Gets the cryptocurrency symbol from payment asset ID
  * @param paymentAssetId - Payment asset ID (e.g., 'baseETH', 'baseUSDC')
+ * @param customAsset - Custom asset configuration (required for 'custom' assets)
  * @returns Cryptocurrency symbol
  */
-export function getSymbolFromAssetId(paymentAssetId: string): string {
+export function getSymbolFromAssetId(paymentAssetId: string, customAsset?: any): string {
   // Map asset IDs to symbols
   const assetIdToSymbol: Record<string, string> = {
     'baseETH': 'ETH',
     'baseSepoliaETH': 'ETH',
     'baseUSDC': 'USDC',
+    'solanaUSDC': 'USDC',
     // Add more mappings as needed
+  }
+  
+  // For custom assets, return the actual symbol from metadata
+  if (paymentAssetId === 'custom' && customAsset?.metadata?.symbol) {
+    return customAsset.metadata.symbol
   }
   
   return assetIdToSymbol[paymentAssetId] || 'ETH'

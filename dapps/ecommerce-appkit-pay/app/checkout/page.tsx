@@ -139,14 +139,14 @@ export default function CheckoutPage() {
 
       try {
         setIsLoadingConversion(true)
-        const paymentAsset = getPaymentAsset(settings.defaultPaymentAsset)
-        const cryptoSymbol = getSymbolFromAssetId(settings.defaultPaymentAsset)
+        const paymentAsset = getPaymentAsset(settings.defaultPaymentAsset, settings.customAsset)
+        const cryptoSymbol = getSymbolFromAssetId(settings.defaultPaymentAsset, settings.customAsset)
         const usdAmount = getTotalPrice()
         
         let finalAmount = usdAmount
         
-        // Check if we need to convert from USD to crypto
-        if (cryptoSymbol !== 'USDC') {
+        // Check if we need to convert from USD to crypto (only for ETH)
+        if (cryptoSymbol === 'ETH') {
           try {
             const conversion = await convertUSDToCrypto(usdAmount, cryptoSymbol)
             finalAmount = conversion.convertedAmount
@@ -162,8 +162,9 @@ export default function CheckoutPage() {
         
         setIsLoadingConversion(false)
         
+
         await openPay({
-          paymentAsset,
+          paymentAsset: paymentAsset as any,
           recipient: settings.recipientAddress,
           amount: finalAmount
         })

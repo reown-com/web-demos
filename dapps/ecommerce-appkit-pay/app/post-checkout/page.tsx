@@ -107,7 +107,7 @@ export default function PostCheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Transaction ID</span>
                     <div className="flex items-center gap-2 text-right">
                       <code className="text-xs bg-muted px-2 py-1 rounded max-w-[200px] truncate">
