@@ -13,7 +13,6 @@ const defaultSettings: AppKitSettings = {
   recipientAddress: '',
   defaultPaymentAsset: 'baseUSDC',
   projectId: process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || '',
-  enableTestnet: true,
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)

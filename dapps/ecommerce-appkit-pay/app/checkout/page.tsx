@@ -15,14 +15,17 @@ import { ArrowLeft, Plus, Minus, Trash2, Loader2 } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { ShippingInfo, PaymentMethod } from '@/lib/types'
 import { usePay } from '@reown/appkit-pay/react'
+import { useAppKit } from '@reown/appkit/react'
 import { useSettings } from '@/lib/settings-context'
 import { getPaymentAsset } from '@/lib/appkit-config'
+import { convertUSDToCrypto, getSymbolFromAssetId } from '@/lib/price-conversion'
 import { toast } from 'sonner'
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCart()
   const { settings } = useSettings()
+  const { close: closeAppKit } = useAppKit()
   
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: '',
@@ -36,14 +39,36 @@ export default function CheckoutPage() {
   })
   
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto')
+  const [isLoadingConversion, setIsLoadingConversion] = useState(false)
 
   const handlePaymentSuccess = (data: any) => {
     console.log('Payment successful:', data)
+    
+    // Show success toast
     toast.success('Crypto payment completed!', {
       description: `Total: ${formatPrice(getTotalPrice())}`
     })
-    clearCart()
-    router.push('/')
+    
+    // Close AppKit modal after 3 seconds and redirect
+    setTimeout(() => {
+      closeAppKit()
+      
+      // Prepare data for post-checkout page (before clearing cart)
+      const queryParams = new URLSearchParams({
+        txId: data,
+        total: getTotalPrice().toString(),
+        paymentMethod: 'crypto',
+        paymentAsset: settings.defaultPaymentAsset,
+        items: encodeURIComponent(JSON.stringify(items)),
+        timestamp: Date.now().toString()
+      })
+      
+      // Clear cart just before redirect
+      clearCart()
+      
+      // Redirect to post-checkout page with query parameters
+      router.push(`/post-checkout?${queryParams.toString()}`)
+    }, 3000)
   }
 
   const handlePaymentError = (error: any) => {
@@ -91,8 +116,18 @@ export default function CheckoutPage() {
       toast.success('Checkout completed!', {
         description: `Payment method: Credit Card • Total: ${formatPrice(getTotalPrice())}`
       })
+      
+      // Prepare data for post-checkout page
+      const queryParams = new URLSearchParams({
+        txId: `cc_${Date.now()}`, // Fake transaction ID for credit card
+        total: getTotalPrice().toString(),
+        paymentMethod: 'credit-card',
+        items: encodeURIComponent(JSON.stringify(items)),
+        timestamp: Date.now().toString()
+      })
+      
       clearCart()
-      router.push('/')
+      router.push(`/post-checkout?${queryParams.toString()}`)
     } else {
       // Handle crypto payment with AppKit Pay
       if (!settings.recipientAddress) {
@@ -103,18 +138,41 @@ export default function CheckoutPage() {
       }
 
       try {
+        setIsLoadingConversion(true)
         const paymentAsset = getPaymentAsset(settings.defaultPaymentAsset)
+        const cryptoSymbol = getSymbolFromAssetId(settings.defaultPaymentAsset)
+        const usdAmount = getTotalPrice()
+        
+        let finalAmount = usdAmount
+        
+        // Check if we need to convert from USD to crypto
+        if (cryptoSymbol !== 'USDC') {
+          try {
+            const conversion = await convertUSDToCrypto(usdAmount, cryptoSymbol)
+            finalAmount = conversion.convertedAmount
+          } catch (conversionError) {
+            console.error('Price conversion failed:', conversionError)
+            toast.error('Failed to get current crypto prices', {
+              description: 'Please try again or check your internet connection'
+            })
+            setIsLoadingConversion(false)
+            return
+          }
+        }
+        
+        setIsLoadingConversion(false)
         
         await openPay({
           paymentAsset,
           recipient: settings.recipientAddress,
-          amount: getTotalPrice()
+          amount: finalAmount
         })
       } catch (error) {
         console.error('Failed to open AppKit Pay:', error)
         toast.error('Failed to open payment modal', {
           description: 'Please try again or check your configuration'
         })
+        setIsLoadingConversion(false)
       }
     }
   }
@@ -385,16 +443,17 @@ export default function CheckoutPage() {
                   <span>{formatPrice(getTotalPrice())}</span>
                 </div>
                 
+
                 <Button 
                   onClick={handleCheckout}
                   className="w-full"
                   size="lg"
-                  disabled={isPending || (paymentMethod === 'crypto' && !settings.recipientAddress)}
+                  disabled={isPending || isLoadingConversion || (paymentMethod === 'crypto' && !settings.recipientAddress)}
                 >
-                  {isPending ? (
+                  {isPending || isLoadingConversion ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      {isLoadingConversion ? 'Getting crypto price...' : 'Processing...'}
                     </>
                   ) : (
                     `Pay with ${paymentMethod === 'credit-card' ? 'Credit Card' : 'Crypto'}`

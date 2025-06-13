@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings, Wallet, Shield, RotateCcw, Copy, Check } from 'lucide-react'
+import { Settings, Wallet, RotateCcw, Copy, Check } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -31,10 +31,6 @@ export function SettingsDrawer() {
     updateSettings({ defaultPaymentAsset: value as any })
   }
 
-  const handleTestnetToggle = (enabled: boolean) => {
-    updateSettings({ enableTestnet: enabled })
-  }
-
   const handleCopyAddress = async () => {
     if (settings.recipientAddress) {
       try {
@@ -53,10 +49,6 @@ export function SettingsDrawer() {
     toast.success('Settings reset to defaults')
   }
 
-  const filteredAssets = paymentAssetOptions.filter(asset => 
-    settings.enableTestnet ? true : !asset.testnet
-  )
-
   return (
     <>
       {/* Floating Settings Button */}
@@ -73,14 +65,14 @@ export function SettingsDrawer() {
           </SheetTrigger>
           
           <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-            <SheetHeader className="pb-6">
+            <SheetHeader className="pb-6 px-6">
               <SheetTitle className="flex items-center gap-2 text-xl">
                 <Settings className="h-5 w-5" />
                 AppKit Pay Settings
               </SheetTitle>
             </SheetHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-6 px-6 pb-6">
               {/* Recipient Address Section */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -124,7 +116,7 @@ export function SettingsDrawer() {
                   onValueChange={handlePaymentAssetChange}
                   className="space-y-2"
                 >
-                  {filteredAssets.map((asset) => (
+                  {paymentAssetOptions.map((asset) => (
                     <div
                       key={asset.id}
                       className="flex items-center space-x-3 rounded-lg border p-3 transition-all cursor-pointer hover:bg-accent/50"
@@ -148,55 +140,6 @@ export function SettingsDrawer() {
                     </div>
                   ))}
                 </RadioGroup>
-              </div>
-
-              <Separator />
-
-              {/* Testnet Toggle */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Network Options</Label>
-                </div>
-                <RadioGroup
-                  value={settings.enableTestnet ? 'enabled' : 'disabled'}
-                  onValueChange={(value) => handleTestnetToggle(value === 'enabled')}
-                  className="space-y-2"
-                >
-                  <div className="flex items-center space-x-3 rounded-lg border p-3 transition-all cursor-pointer hover:bg-accent/50">
-                    <RadioGroupItem value="disabled" id="mainnet" />
-                    <Label htmlFor="mainnet" className="flex-1 cursor-pointer">
-                      <div className="font-medium">Mainnet Only</div>
-                      <div className="text-xs text-muted-foreground">
-                        Production networks with real cryptocurrencies
-                      </div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 rounded-lg border p-3 transition-all cursor-pointer hover:bg-accent/50">
-                    <RadioGroupItem value="enabled" id="testnet" />
-                    <Label htmlFor="testnet" className="flex-1 cursor-pointer">
-                      <div className="font-medium">Include Testnets</div>
-                      <div className="text-xs text-muted-foreground">
-                        Access testnet options for development
-                      </div>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <Separator />
-
-              {/* Project ID Info */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Project Configuration</Label>
-                <div className="p-3 bg-muted rounded-lg">
-                  <div className="text-xs text-muted-foreground">
-                    <div>Project ID: {settings.projectId || 'Not configured'}</div>
-                    <div className="mt-1">
-                      Configure NEXT_PUBLIC_REOWN_PROJECT_ID in your environment
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <Separator />

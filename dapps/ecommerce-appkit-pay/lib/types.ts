@@ -32,7 +32,6 @@ export interface AppKitSettings {
   recipientAddress: string
   defaultPaymentAsset: 'baseUSDC' | 'baseETH' | 'baseSepoliaETH'
   projectId: string
-  enableTestnet: boolean
 }
 
 export interface PaymentAssetOption {
