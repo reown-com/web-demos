@@ -2,10 +2,13 @@
 
 import { wagmiAdapter, projectId } from '@/config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createAppKit } from '@reown/appkit/react'
-import { mainnet, arbitrum, base, baseSepolia } from '@reown/appkit/networks'
+import { ConstantsUtil, createAppKit } from '@reown/appkit/react'
+import { abstract, arbitrum, aurora, base, baseSepolia, berachain, bitcoin, bitcoinTestnet, gnosis, hedera, mainnet, mantle, monadTestnet, optimism, polygon, sepolia, solana, solanaDevnet, solanaTestnet, unichainSepolia } from '@reown/appkit/networks'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
+import { SolanaAdapter } from '@reown/appkit-adapter-solana'
+import { BitcoinAdapter } from '@reown/appkit-adapter-bitcoin'
+import type { AppKitNetwork } from '@reown/appkit/networks'
 
 
 // Set up queryClient
@@ -15,6 +18,29 @@ if (!projectId) {
   throw new Error('Project ID is not defined')
 }
 
+const networks = [
+    abstract,
+    arbitrum,
+    aurora,
+    base,
+    baseSepolia,
+    berachain,
+    bitcoin,
+    bitcoinTestnet,
+    gnosis,
+    hedera,
+    mainnet,
+    mantle,
+    monadTestnet,
+    optimism,
+    polygon,
+    sepolia,
+    solana,
+    solanaDevnet,
+    solanaTestnet,
+    unichainSepolia,        
+] as [AppKitNetwork, ...AppKitNetwork[]]
+
 // Set up metadata
 const metadata = {
   name: 'appkit-example',
@@ -23,11 +49,15 @@ const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 
+const solanaWeb3JsAdapter = new SolanaAdapter()
+  
+const bitcoinAdapter = new BitcoinAdapter()
+
 // Create the modal
 const modal = createAppKit({
-  adapters: [wagmiAdapter],
+  adapters: [wagmiAdapter, solanaWeb3JsAdapter, bitcoinAdapter],
   projectId,
-  networks: [base, baseSepolia],
+  networks,
   defaultNetwork: base,
   metadata: metadata,
   features: {
