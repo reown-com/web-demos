@@ -40,9 +40,13 @@ export default function CheckoutPage() {
   
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto')
   const [isLoadingConversion, setIsLoadingConversion] = useState(false)
+  const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false)
 
   const handlePaymentSuccess = (data: any) => {
     console.log('Payment successful:', data)
+    
+    // Mark payment as successful to prevent empty cart display
+    setIsPaymentSuccessful(true)
     
     // Show success toast
     toast.success('Crypto payment completed!', {
@@ -113,6 +117,8 @@ export default function CheckoutPage() {
     
     if (paymentMethod === 'credit-card') {
       // Handle credit card payment
+      setIsPaymentSuccessful(true)
+      
       toast.success('Checkout completed!', {
         description: `Payment method: Credit Card • Total: ${formatPrice(getTotalPrice())}`
       })
@@ -126,6 +132,7 @@ export default function CheckoutPage() {
         timestamp: Date.now().toString()
       })
       
+      // Clear cart just before redirect
       clearCart()
       router.push(`/post-checkout?${queryParams.toString()}`)
     } else {
@@ -178,7 +185,7 @@ export default function CheckoutPage() {
     }
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !isPaymentSuccessful) {
     return (
       <>
         <Header />

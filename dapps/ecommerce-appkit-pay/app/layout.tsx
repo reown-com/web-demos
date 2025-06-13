@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Merch Store - Premium Apparel & Accessories",
+  title: "Reown Demo Merch Store",
   description: "Shop premium t-shirts, hoodies, and tote bags with modern design and quality materials.",
 };
 

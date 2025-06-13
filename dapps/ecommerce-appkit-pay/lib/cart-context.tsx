@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
 import { CartItem, Product } from './types'
 
 interface CartContextType {
@@ -20,6 +20,9 @@ type CartAction =
   | { type: 'REMOVE_ITEM'; payload: { productId: string; size: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { productId: string; size: string; quantity: number } }
   | { type: 'CLEAR_CART' }
+  | { type: 'LOAD_CART'; payload: CartItem[] }
+
+const CART_STORAGE_KEY = 'shopping-cart'
 
 function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
   switch (action.type) {
@@ -58,6 +61,8 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
     }
     case 'CLEAR_CART':
       return []
+    case 'LOAD_CART':
+      return action.payload
     default:
       return state
   }
@@ -65,6 +70,33 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, dispatch] = useReducer(cartReducer, [])
+  const [isLoaded, setIsLoaded] = React.useState(false)
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY)
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart) as CartItem[]
+        dispatch({ type: 'LOAD_CART', payload: parsedCart })
+      }
+    } catch (error) {
+      console.error('Failed to load cart from localStorage:', error)
+    } finally {
+      setIsLoaded(true)
+    }
+  }, [])
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (!isLoaded) return // Don't save during initial load
+
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+    } catch (error) {
+      console.error('Failed to save cart to localStorage:', error)
+    }
+  }, [items, isLoaded])
 
   const addItem = (product: Product, size: string, quantity: number = 1) => {
     dispatch({ type: 'ADD_ITEM', payload: { product, size, quantity } })
