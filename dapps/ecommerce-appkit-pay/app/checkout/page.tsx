@@ -11,14 +11,18 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Minus, Trash2, Loader2 } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { ShippingInfo, PaymentMethod } from '@/lib/types'
+import { usePay } from '@reown/appkit-pay/react'
+import { useSettings } from '@/lib/settings-context'
+import { getPaymentAsset } from '@/lib/appkit-config'
 import { toast } from 'sonner'
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCart()
+  const { settings } = useSettings()
   
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: '',
@@ -32,6 +36,28 @@ export default function CheckoutPage() {
   })
   
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto')
+
+  const handlePaymentSuccess = (data: any) => {
+    console.log('Payment successful:', data)
+    toast.success('Crypto payment completed!', {
+      description: `Total: ${formatPrice(getTotalPrice())}`
+    })
+    clearCart()
+    router.push('/')
+  }
+
+  const handlePaymentError = (error: any) => {
+    console.error('Payment error:', error)
+    const errorMessage = typeof error === 'string' ? error : 'An unexpected error occurred'
+    toast.error('Payment failed', {
+      description: errorMessage
+    })
+  }
+
+  const { open: openPay, isPending } = usePay({
+    onSuccess: handlePaymentSuccess,
+    onError: handlePaymentError,
+  })
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -54,17 +80,43 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (items.length === 0) {
       toast.error('Your cart is empty!')
       return
     }
     
-    toast.success('Checkout completed!', {
-      description: `Payment method: ${paymentMethod === 'credit-card' ? 'Credit Card' : 'Crypto'} • Total: ${formatPrice(getTotalPrice())}`
-    })
-    clearCart()
-    router.push('/')
+    if (paymentMethod === 'credit-card') {
+      // Handle credit card payment
+      toast.success('Checkout completed!', {
+        description: `Payment method: Credit Card • Total: ${formatPrice(getTotalPrice())}`
+      })
+      clearCart()
+      router.push('/')
+    } else {
+      // Handle crypto payment with AppKit Pay
+      if (!settings.recipientAddress) {
+        toast.error('Recipient address not configured', {
+          description: 'Please configure a recipient address in settings'
+        })
+        return
+      }
+
+      try {
+        const paymentAsset = getPaymentAsset(settings.defaultPaymentAsset)
+        
+        await openPay({
+          paymentAsset,
+          recipient: settings.recipientAddress,
+          amount: getTotalPrice()
+        })
+      } catch (error) {
+        console.error('Failed to open AppKit Pay:', error)
+        toast.error('Failed to open payment modal', {
+          description: 'Please try again or check your configuration'
+        })
+      }
+    }
   }
 
   if (items.length === 0) {
@@ -337,9 +389,23 @@ export default function CheckoutPage() {
                   onClick={handleCheckout}
                   className="w-full"
                   size="lg"
+                  disabled={isPending || (paymentMethod === 'crypto' && !settings.recipientAddress)}
                 >
-                  Pay with {paymentMethod === 'credit-card' ? 'Credit Card' : 'Crypto'}
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `Pay with ${paymentMethod === 'credit-card' ? 'Credit Card' : 'Crypto'}`
+                  )}
                 </Button>
+                
+                {paymentMethod === 'crypto' && !settings.recipientAddress && (
+                  <p className="text-sm text-amber-600 text-center">
+                    ⚠️ Configure recipient address in settings to enable crypto payments
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>

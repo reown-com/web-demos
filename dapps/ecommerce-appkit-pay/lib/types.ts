@@ -26,3 +26,19 @@ export interface ShippingInfo {
 }
 
 export type PaymentMethod = 'credit-card' | 'crypto' 
+
+// New types for AppKit Pay settings
+export interface AppKitSettings {
+  recipientAddress: string
+  defaultPaymentAsset: 'baseUSDC' | 'baseETH' | 'baseSepoliaETH'
+  projectId: string
+  enableTestnet: boolean
+}
+
+export interface PaymentAssetOption {
+  id: string
+  name: string
+  symbol: string
+  network: string
+  testnet: boolean
+} 
