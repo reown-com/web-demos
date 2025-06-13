@@ -327,10 +327,6 @@ export default function CheckoutPage() {
                   <span>Shipping</span>
                   <span>Free</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>Calculated at checkout</span>
-                </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
@@ -342,7 +338,7 @@ export default function CheckoutPage() {
                   className="w-full"
                   size="lg"
                 >
-                  Complete Order
+                  Pay with {paymentMethod === 'credit-card' ? 'Credit Card' : 'Crypto'}
                 </Button>
               </CardContent>
             </Card>
