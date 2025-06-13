@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider"
 import { CartProvider } from "@/lib/cart-context"
 import { Toaster } from "@/components/ui/sonner"
+import { SettingsDrawer } from "@/components/settings-drawer"
 import { khTeka } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export default function RootLayout({
             <CartProvider>
               {children}
               <Toaster />
+              <SettingsDrawer />
             </CartProvider>
           </ThemeProvider>
       </body>

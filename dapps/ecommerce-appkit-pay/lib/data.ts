@@ -23,7 +23,7 @@ export const products: Product[] = [
     id: '3',
     name: 'Canvas Tote Bag',
     description: 'Durable canvas tote bag perfect for everyday use.',
-    price: 24.99,
+    price: 1.2,
     image: '/products/tote-bag.png',
     category: 'tote',
     sizes: ['One Size']
