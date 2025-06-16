@@ -6,34 +6,34 @@ export const products: Product[] = [
     name: 'Classic Cotton T-Shirt',
     description: 'Comfortable, everyday cotton t-shirt with a perfect fit.',
     price: 10,
-    image: '/products/cotton-tshirt.png',
+    image: '/products/reown/tshirt-back.png',
     category: 'tshirt',
     sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
   },
   {
     id: '2',
-    name: 'Premium Hoodie',
-    description: 'Soft, warm hoodie made from premium organic cotton blend.',
-    price: 39.99,
-    image: '/products/premium-hoodie.png',
-    category: 'hoodie',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL']
+    name: 'Premium Reown Cap',
+    description: 'Stylish cap featuring the Reown logo, perfect for any casual outfit.',
+    price: 5.99,
+    image: '/products/reown/cap-front.jpg',
+    category: 'cap',
+    sizes: ['One Size']
   },
   {
     id: '3',
     name: 'Canvas Tote Bag',
     description: 'Durable canvas tote bag perfect for everyday use.',
     price: 1.2,
-    image: '/products/tote-bag.png',
+    image: '/products/reown/tote.jpg',
     category: 'tote',
     sizes: ['One Size']
   },
   {
     id: '4',
-    name: 'Vintage Wash T-Shirt',
-    description: 'Relaxed fit t-shirt with vintage wash for a lived-in look.',
-    price: 15.99,
-    image: '/products/vintage-tshirt.png',
+    name: 'Premium Reown T-Shirt',
+    description: 'High-quality premium t-shirt with Reown branding.',
+    price: 29.99,
+    image: '/products/reown/reown-premium-tshirt.png',
     category: 'tshirt',
     sizes: ['XS', 'S', 'M', 'L', 'XL']
   }
