@@ -24,6 +24,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Reown Demo Merch Store",
   description: "Shop premium t-shirts, hoodies, and tote bags with modern design and quality materials.",
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 export default async function RootLayout({
