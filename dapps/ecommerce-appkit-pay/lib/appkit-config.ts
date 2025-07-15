@@ -1,18 +1,17 @@
 import { baseUSDC, baseETH, baseSepoliaETH } from '@reown/appkit-pay'
-import { PaymentAssetOption, CustomAssetConfig, AppKitSettings } from './types'
+import { PaymentAssetOption, CustomAssetConfig } from './types'
 
 // Solana USDC asset definition
 const solanaUSDC = {
-  asset: {
-    network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+  network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
     asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     metadata: {
       name: 'USD Coin',
       symbol: 'USDC',
       decimals: 6
     }
-  }
 }
+
 
 // Payment asset options for the UI
 export const paymentAssetOptions: PaymentAssetOption[] = [
