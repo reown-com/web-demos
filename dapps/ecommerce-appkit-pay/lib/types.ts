@@ -25,7 +25,7 @@ export interface ShippingInfo {
   country: string
 }
 
-export type PaymentMethod = 'credit-card' | 'crypto' 
+export type PaymentMethod = 'credit-card' | 'crypto' | 'wallet_pay'
 
 // Custom asset configuration for AppKit Pay
 export interface CustomAssetConfig {

@@ -16,17 +16,19 @@ import { useCart } from '@/lib/cart-context'
 import { ShippingInfo, PaymentMethod } from '@/lib/types'
 import { usePay } from '@reown/appkit-pay/react'
 import { useAppKit } from '@reown/appkit/react'
+import { useWalletPay } from '@/lib/wallet-pay'
 import { useSettings } from '@/lib/settings-context'
 import { getPaymentAsset } from '@/lib/appkit-config'
 import { convertUSDToCrypto, getSymbolFromAssetId } from '@/lib/price-conversion'
 import { toast } from 'sonner'
+import { createModal } from '@/context'
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCart()
   const { settings } = useSettings()
   const { close: closeAppKit } = useAppKit()
-  
+  const { send, initProvider } = useWalletPay()
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: '',
     lastName: '',
@@ -45,19 +47,15 @@ export default function CheckoutPage() {
   const handlePaymentSuccess = (data: any) => {
     console.log('Payment successful:', data)
     
-    // Mark payment as successful to prevent empty cart display
     setIsPaymentSuccessful(true)
     
-    // Show success toast
     toast.success('Crypto payment completed!', {
       description: `Total: ${formatPrice(getTotalPrice())}`
     })
     
-    // Close AppKit modal after 3 seconds and redirect
     setTimeout(() => {
       closeAppKit()
       
-      // Prepare data for post-checkout page (before clearing cart)
       const queryParams = new URLSearchParams({
         txId: data,
         total: getTotalPrice().toString(),
@@ -67,10 +65,8 @@ export default function CheckoutPage() {
         timestamp: Date.now().toString()
       })
       
-      // Clear cart just before redirect
       clearCart()
       
-      // Redirect to post-checkout page with query parameters
       router.push(`/post-checkout?${queryParams.toString()}`)
     }, 3000)
   }
@@ -116,14 +112,12 @@ export default function CheckoutPage() {
     }
     
     if (paymentMethod === 'credit-card') {
-      // Handle credit card payment
       setIsPaymentSuccessful(true)
       
       toast.success('Checkout completed!', {
         description: `Payment method: Credit Card • Total: ${formatPrice(getTotalPrice())}`
       })
       
-      // Prepare data for post-checkout page
       const queryParams = new URLSearchParams({
         txId: `cc_${Date.now()}`, // Fake transaction ID for credit card
         total: getTotalPrice().toString(),
@@ -132,11 +126,13 @@ export default function CheckoutPage() {
         timestamp: Date.now().toString()
       })
       
-      // Clear cart just before redirect
       clearCart()
       router.push(`/post-checkout?${queryParams.toString()}`)
-    } else {
-      // Handle crypto payment with AppKit Pay
+    } else if (paymentMethod === 'crypto') {
+      // re-instantiate appkit
+      createModal()
+
+
       if (!settings.recipientAddress) {
         toast.error('Recipient address not configured', {
           description: 'Please configure a recipient address in settings'
@@ -152,7 +148,6 @@ export default function CheckoutPage() {
         
         let finalAmount = usdAmount
         
-        // Check if we need to convert from USD to crypto (only for ETH)
         if (cryptoSymbol === 'ETH') {
           try {
             const conversion = await convertUSDToCrypto(usdAmount, cryptoSymbol)
@@ -181,6 +176,42 @@ export default function CheckoutPage() {
           description: 'Please try again or check your configuration'
         })
         setIsLoadingConversion(false)
+      }
+    } else if (paymentMethod === 'wallet_pay') {
+      try {
+        const instances = await initProvider();
+        const request = 
+        {
+          version: "1.0.0",
+          orderId: "order-123456",
+          acceptedPayments: [
+            {
+              recipient:
+                "eip155:1:0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+              asset:
+                "eip155:1/erc20:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+              amount: "0x5F5E100" as `0x${string}`,
+            },
+          ],
+          expiry: 1709593200,
+        }
+
+        const response = await send(request, instances);
+        console.log("response", response);
+        if (response.success) {
+          toast.success('wallet_pay payment completed!', {
+            description: `Total: ${formatPrice(getTotalPrice())}`
+          })
+        } else {
+          toast.error('wallet_pay payment failed', {
+            description: response.message
+          })
+        }
+      } catch (error) {
+        console.error('Failed to initialize wallet provider:', error)
+        toast.error('Failed to initialize wallet provider', {
+          description: 'Please try again'
+        })
       }
     }
   }
@@ -427,6 +458,21 @@ export default function CheckoutPage() {
                       </div>
                     </Label>
                   </div>
+
+                  <div className={`flex items-center space-x-3 rounded-lg border p-4 transition-all cursor-pointer hover:bg-accent/50 ${
+                    paymentMethod === 'wallet_pay' ? 'border-primary bg-primary/5' : ''
+                  }`}>
+                    <RadioGroupItem value="wallet_pay" id="wallet_pay" />
+                    <Label htmlFor="wallet_pay" className="flex items-center cursor-pointer flex-1">
+                      <div className="flex items-center space-x-3 mr-4">
+                        <Image src="/payment-options/walletconnect.svg" alt="WalletConnect" width={20} height={20} className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="font-medium">WalletConnect Pay</div>
+                        <div className="text-xs text-muted-foreground">Pay with any wallet</div>
+                      </div>
+                    </Label>
+                  </div>
                 </RadioGroup>
               </CardContent>
             </Card>
@@ -464,9 +510,16 @@ export default function CheckoutPage() {
                       {isLoadingConversion ? 'Getting crypto price...' : 'Processing...'}
                     </>
                   ) : (
-                    `Pay with ${paymentMethod === 'credit-card' ? 'Credit Card' : 'Crypto'}`
+                    `Pay with ${
+                      paymentMethod === 'credit-card' 
+                        ? 'Credit Card' 
+                        : paymentMethod === 'wallet_pay' 
+                        ? 'WalletConnect' 
+                        : 'Crypto'
+                    }`
                   )}
                 </Button>
+                
                 
                 {paymentMethod === 'crypto' && !settings.recipientAddress && (
                   <p className="text-sm text-amber-600 text-center">

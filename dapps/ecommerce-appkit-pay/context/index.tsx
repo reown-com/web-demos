@@ -14,9 +14,7 @@ import type { AppKitNetwork } from '@reown/appkit/networks'
 // Set up queryClient
 const queryClient = new QueryClient()
 
-if (!projectId) {
-  throw new Error('Project ID is not defined')
-}
+
 
 const networks = [
     abstract,
@@ -53,18 +51,27 @@ const solanaWeb3JsAdapter = new SolanaAdapter()
   
 const bitcoinAdapter = new BitcoinAdapter()
 
-// Create the modal
-const modal = createAppKit({
-  adapters: [wagmiAdapter, solanaWeb3JsAdapter, bitcoinAdapter],
-  projectId,
-  networks,
-  defaultNetwork: base,
-  metadata: metadata,
-  features: {
-    analytics: true, // Optional - defaults to your Cloud configuratio
-    pay: true
+
+export const createModal = () => {
+  if (!projectId) {
+    throw new Error('Project ID is not defined')
   }
-})
+  
+  createAppKit({
+    adapters: [wagmiAdapter, solanaWeb3JsAdapter, bitcoinAdapter],
+    projectId,
+    networks,
+    defaultNetwork: base,
+    metadata: metadata,
+    features: {
+      analytics: true, // Optional - defaults to your Cloud configuratio
+      pay: true
+    }
+  })
+  
+} 
+
+createModal()
 
 function ContextProvider({ children, cookies }: { children: ReactNode; cookies: string | null }) {
   const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)
