@@ -1,10 +1,10 @@
 import { cookieStorage, createStorage } from 'wagmi'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { base, baseSepolia } from '@reown/appkit/networks'
-import type { Chain } from 'viem'
+import type { AppKitNetwork } from '@reown/appkit/networks'
 
 
-export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID
+export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || ''
 
 
 if (!projectId) {
@@ -12,7 +12,7 @@ if (!projectId) {
 }
 
 // Define supported networks for AppKit Pay
-export const networks: [Chain, ...Chain[]] = [base, baseSepolia]
+export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [base, baseSepolia]
 
 //Set up the Wagmi Adapter (Config)
 export const wagmiAdapter = new WagmiAdapter({
